@@ -6,6 +6,23 @@ It contains support for C++17 STL and fast assmebly implementations of essential
 
 The generated HEX file is compatible with the [Teensy Loader](https://www.pjrc.com/teensy/loader.html).
 
+# Build Instructions (macOS)
+
+1. Install the Arm GCC Toolchain for Embedded Processors
+```
+brew tap ArmMbed/homebrew-formulae
+brew install arm-none-eabi-gcc
+```
+
+2. Compile the source
+```
+make
+````
+
+3. Flash the binary
+```
+make flash
+```
 
 # Credits
 
