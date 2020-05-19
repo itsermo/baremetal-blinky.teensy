@@ -1,24 +1,48 @@
 CC = arm-none-eabi-gcc
-LD = arm-none-eabi-ld
+CXX = arm-none-eabi-g++
 OBJCOPY = arm-none-eabi-objcopy
 OBJDUMP = arm-none-eabi-objdump
 SIZE = arm-none-eabi-size
-LOADER = teensy_loader_cli
+LOADER = 3rdparty/bin/macos-x86_64/teensy_loader_cli
 
 OUTFILE = firmware
 
-BUILD_DIR = ./build
-SRC_DIRS ?= ./src ./teensy ./include
+LINKER_SCRIPT=etc/imxrt1062.ld
 
-SRCS := $(shell find $(SRC_DIRS) -name *.c -or -name *.s)
-OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
+BUILD_DIR = build
+SRC_DIRS ?= src include 3rdparty/src
+
+SRCS := $(shell find $(SRC_DIRS) -name *.c -or -name *.cpp -or -name *.S)
+OBJS := $(SRCS:%=$(BUILD_DIR)/obj/%.o)
 DEPS := $(OBJS:.o=.d)
 
-INC_DIRS := $(shell find $(SRC_DIRS) -type d)
-INC_FLAGS := $(addprefix -I,$(INC_DIRS))
+FLAGS_CPU   := -mthumb -mcpu=cortex-m7 -mfloat-abi=hard -mfpu=fpv5-d16
+FLAGS_OPT   := -O2
+FLAGS_COM   := -g -Wall -ffunction-sections -fdata-sections -MMD -nostartfiles
 
-CFLAGS = -O3 -Wall -Werror -mcpu=cortex-m7 -mthumb $(INC_FLAGS)
-LDFLAGS = -Wl,--gc-sections,--print-gc-sections,--print-memory-usage -nostdlib -nostartfiles -Tteensy/imxrt1062.ld
+FLAGS_CPP   := -std=gnu++17 -fno-exceptions -fpermissive -fno-rtti -fno-threadsafe-statics -felide-constructors -Wno-error=narrowing
+FLAGS_C     := 
+FLAGS_S     := -x assembler-with-cpp
+FLAGS_LD    := -Wl,--gc-sections,--print-memory-usage,--relax,-T$(LINKER_SCRIPT)
+
+INCLUDE_DIRS := $(shell find $(SRC_DIRS) -type d) 3rdparty/include
+FLAGS_INCLUDE := $(addprefix -I,$(INCLUDE_DIRS))
+
+LIB_DIRS := 
+FLAGS_LIB_DIRS = $(addprefix -L,$(LIB_DIRS))
+
+LIBS := m c_nano stdc++_nano gcc
+FLAGS_LIBS := $(addprefix -l,$(LIBS))
+
+DEFINES     := -D__IMXRT1062__
+DEFINES     += -DF_CPU=600000000
+
+CPP_FLAGS   := $(FLAGS_CPU) $(FLAGS_OPT) $(FLAGS_COM) $(DEFINES) $(FLAGS_CPP) $(FLAGS_INCLUDE)
+C_FLAGS     := $(FLAGS_CPU) $(FLAGS_OPT) $(FLAGS_COM) $(DEFINES) $(FLAGS_C) $(FLAGS_INCLUDE)
+S_FLAGS     := $(FLAGS_CPU) $(FLAGS_OPT) $(FLAGS_COM) $(DEFINES) $(FLAGS_S) $(FLAGS_INCLUDE)
+LD_FLAGS    := $(FLAGS_LD) $(FLAGS_LIB_DIRS) $(FLAGS_LIBS)
+AR_FLAGS    := rcs
+
 
 $(BUILD_DIR)/$(OUTFILE).hex: $(BUILD_DIR)/$(OUTFILE).elf
 	@$(OBJCOPY) -O ihex -R .eeprom build/$(OUTFILE).elf build/$(OUTFILE).hex
@@ -27,22 +51,32 @@ $(BUILD_DIR)/$(OUTFILE).hex: $(BUILD_DIR)/$(OUTFILE).elf
 	@$(SIZE) build/$(OUTFILE).elf
 
 $(BUILD_DIR)/$(OUTFILE).elf: $(OBJS)
-	@$(CC) $(CFLAGS) -Xlinker -Map=build/$(OUTFILE).map $(LDFLAGS) -o $@ $^
+	@$(CXX) $(CPP_FLAGS) -Xlinker -Map=build/$(OUTFILE).map $(LD_FLAGS) -o $@ $^
+	@echo Linking...
 
-$(BUILD_DIR)/%.s.o: %.s
+$(BUILD_DIR)/obj/%.S.o: %.S
+	@echo "Assembling (S)   $<..."
 	@$(MKDIR_P) $(dir $@)
-	@$(AS) $(ASFLAGS) -c $< -o $@
+	@$(CXX) $(S_FLAGS) -c $< -o $@
+	
 
-$(BUILD_DIR)/%.c.o: %.c
+$(BUILD_DIR)/obj/%.c.o: %.c
+	@echo "Compiling  (C++) $<..."
 	@$(MKDIR_P) $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
-
+	@$(CC) $(C_FLAGS) -c $< -o $@
+	
+$(BUILD_DIR)/obj/%.cpp.o: %.cpp
+	@echo "Compiling  (C)   $<..."
+	@$(MKDIR_P) $(dir $@)
+	@$(CXX) ${CPP_FLAGS} -c $< -o $@
+	
 .PHONY: flash
 flash: $(BUILD_DIR)/$(OUTFILE).hex
 	$(LOADER) --mcu=TEENSY40 -w -v $<
 
 .PHONY: clean
 clean:
+	@echo "Deleting '$(BUILD_DIR)' directory..."
 	@$(RM) -r $(BUILD_DIR)
 
 MKDIR_P ?= mkdir -p
