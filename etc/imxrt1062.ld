@@ -83,11 +83,17 @@ SECTIONS
     .debug_str      0 : { *(.debug_str) }
     .debug_loc      0 : { *(.debug_loc) }
 
-    .ARM.exidx :
-    {
-        __exidx_start = .;
-        *(.ARM.exidx* .gnu.linkonce.armexidx.*)
-        __exidx_end = .;
-        . = ALIGN(4);
-    } > RAM
+    /* ARM magic sections */  
+    .ARM.extab : ALIGN(4)  
+    {  
+        *(.ARM.extab* .gnu.linkonce.armextab.*)  
+    } > RAM  
+        
+    . = ALIGN(4);  
+    __exidx_start = .;     
+    .ARM.exidx : ALIGN(4)  
+    {  
+        *(.ARM.exidx* .gnu.linkonce.armexidx.*)  
+    } > RAM  
+    __exidx_end = .;
 }
