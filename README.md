@@ -8,7 +8,7 @@ The generated HEX file is compatible with the [Teensy Loader](https://www.pjrc.c
 
 # Build Instructions (macOS)
 
-1. Install the Arm GCC Toolchain for Embedded Processors
+1. Install the ARM GCC Toolchain for Embedded Processors
 ```
 brew tap ArmMbed/homebrew-formulae
 brew install arm-none-eabi-gcc
@@ -18,6 +18,29 @@ brew install arm-none-eabi-gcc
 ```
 make
 ````
+
+3. Flash the binary
+```
+make flash
+```
+
+# Build Instructions (linux)
+
+1. Install the ARM GCC Toolchain for Embedded Processors
+
+Fedora or RHL-based Distro
+```
+sudo dnf install arm-none-eabi-gcc
+```
+Ubuntu or Debian-based Distro
+```
+sudo apt-get install gcc-arm-none-eabi binutils-arm-none-eabi
+```
+
+2. Compile the source
+```
+make
+```
 
 3. Flash the binary
 ```
