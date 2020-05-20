@@ -83,10 +83,11 @@ SECTIONS
     .debug_str      0 : { *(.debug_str) }
     .debug_loc      0 : { *(.debug_loc) }
 
-    .ARM.exidx : {
+    .ARM.exidx :
+    {
         __exidx_start = .;
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)
-        . = ALIGN(4);
         __exidx_end = .;
+        . = ALIGN(4);
     } > RAM
 }
