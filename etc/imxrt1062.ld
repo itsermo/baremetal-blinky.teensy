@@ -87,13 +87,13 @@ SECTIONS
     .ARM.extab : ALIGN(4)  
     {  
         *(.ARM.extab* .gnu.linkonce.armextab.*)  
-    } > RAM  
+    } > ITCM  
         
     . = ALIGN(4);  
     __exidx_start = .;     
     .ARM.exidx : ALIGN(4)  
     {  
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)  
-    } > RAM  
+    } > ITCM  
     __exidx_end = .;
 }
