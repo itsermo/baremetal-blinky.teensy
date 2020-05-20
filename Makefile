@@ -20,26 +20,28 @@ FLAGS_CPU   := -mthumb -mcpu=cortex-m7 -mfloat-abi=hard -mfpu=fpv5-d16
 FLAGS_OPT   := -O2
 FLAGS_COM   := -g -Wall -ffunction-sections -fdata-sections -MMD -nostartfiles
 
-FLAGS_CPP   := -std=gnu++17 -fno-exceptions -fpermissive -fno-rtti -fno-threadsafe-statics -felide-constructors -Wno-error=narrowing
+FLAGS_CPP   := -std=gnu++17 -fno-unwind-tables -fno-exceptions -fpermissive -fno-rtti -fno-threadsafe-statics -felide-constructors -Wno-error=narrowing
 FLAGS_C     := 
 FLAGS_S     := -x assembler-with-cpp
-FLAGS_LD    := -Wl,--gc-sections,--print-memory-usage,--relax,-T$(LINKER_SCRIPT)
+FLAGS_LD    := -Wl,--gc-sections,--print-memory-usage,--relax,-T$(LINKER_SCRIPT) --specs=nosys.specs
 
 INCLUDE_DIRS := $(shell find $(SRC_DIRS) -type d) 3rdparty/include
 FLAGS_INCLUDE := $(addprefix -I,$(INCLUDE_DIRS))
 
-LIB_DIRS := 
+LIB_DIRS := 3rdparty/lib
 FLAGS_LIB_DIRS = $(addprefix -L,$(LIB_DIRS))
 
 LIBS := m c_nano stdc++_nano gcc
 FLAGS_LIBS := $(addprefix -l,$(LIBS))
 
-DEFINES     := -D__IMXRT1062__
-DEFINES     += -DF_CPU=600000000
+DEFINES     := __IMXRT1062__
+DEFINES     += F_CPU=600000000
 
-CPP_FLAGS   := $(FLAGS_CPU) $(FLAGS_OPT) $(FLAGS_COM) $(DEFINES) $(FLAGS_CPP) $(FLAGS_INCLUDE)
-C_FLAGS     := $(FLAGS_CPU) $(FLAGS_OPT) $(FLAGS_COM) $(DEFINES) $(FLAGS_C) $(FLAGS_INCLUDE)
-S_FLAGS     := $(FLAGS_CPU) $(FLAGS_OPT) $(FLAGS_COM) $(DEFINES) $(FLAGS_S) $(FLAGS_INCLUDE)
+FLAGS_DEFINES := $(addprefix -D,$(DEFINES))
+
+CPP_FLAGS   := $(FLAGS_CPU) $(FLAGS_OPT) $(FLAGS_COM) $(FLAGS_DEFINES) $(FLAGS_CPP) $(FLAGS_INCLUDE)
+C_FLAGS     := $(FLAGS_CPU) $(FLAGS_OPT) $(FLAGS_COM) $(FLAGS_DEFINES) $(FLAGS_C) $(FLAGS_INCLUDE)
+S_FLAGS     := $(FLAGS_CPU) $(FLAGS_OPT) $(FLAGS_COM) $(FLAGS_DEFINES) $(FLAGS_S) $(FLAGS_INCLUDE)
 LD_FLAGS    := $(FLAGS_LD) $(FLAGS_LIB_DIRS) $(FLAGS_LIBS)
 AR_FLAGS    := rcs
 
